@@ -1,0 +1,31 @@
+{
+  "poll_interval_seconds": 30,
+  "data_dir": "/var/lib/opi-dockerd-watch",
+  "telegram_bot_token": "123456789:replace_me",
+  "telegram_chat_id": "123456789",
+  "host_alias": "orangepi-ultra",
+  "alert_cooldown_minutes": 20,
+  "containers": [
+    {
+      "name": "tires_backend",
+      "display_name": "Tires Backend",
+      "required": true,
+      "auto_restart": false,
+      "max_restart_delta": 2
+    },
+    {
+      "name": "cloudflare_tunnel",
+      "display_name": "Cloudflare Tunnel",
+      "required": true,
+      "auto_restart": true,
+      "max_restart_delta": 2
+    },
+    {
+      "name": "tires_shop_db",
+      "display_name": "Shop DB",
+      "required": true,
+      "auto_restart": false,
+      "max_restart_delta": 1
+    }
+  ]
+}
