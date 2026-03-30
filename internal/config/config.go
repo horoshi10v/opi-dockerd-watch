@@ -9,13 +9,25 @@ import (
 )
 
 type Config struct {
-	PollIntervalSeconds int               `json:"poll_interval_seconds"`
-	DataDir             string            `json:"data_dir"`
-	TelegramBotToken    string            `json:"telegram_bot_token"`
-	TelegramChatID      string            `json:"telegram_chat_id"`
-	HostAlias           string            `json:"host_alias"`
-	AlertCooldownMinute int               `json:"alert_cooldown_minutes"`
-	Containers          []ContainerConfig `json:"containers"`
+	PollIntervalSeconds          int                `json:"poll_interval_seconds"`
+	DataDir                      string             `json:"data_dir"`
+	TelegramBotToken             string             `json:"telegram_bot_token"`
+	TelegramChatID               string             `json:"telegram_chat_id"`
+	HostAlias                    string             `json:"host_alias"`
+	AlertCooldownMinute          int                `json:"alert_cooldown_minutes"`
+	InspectFailureThreshold      int                `json:"inspect_failure_threshold"`
+	StatusFailureThreshold       int                `json:"status_failure_threshold"`
+	AutoRestartCooldownMinutes   int                `json:"auto_restart_cooldown_minutes"`
+	AutoRestartMaxAttempts       int                `json:"auto_restart_max_attempts"`
+	AutoRestartMaxBackoffMinutes int                `json:"auto_restart_max_backoff_minutes"`
+	DailySummary                 DailySummaryConfig `json:"daily_summary"`
+	Containers                   []ContainerConfig  `json:"containers"`
+}
+
+type DailySummaryConfig struct {
+	Enabled bool `json:"enabled"`
+	Hour    int  `json:"hour"`
+	Minute  int  `json:"minute"`
 }
 
 type ContainerConfig struct {
@@ -44,12 +56,33 @@ func Load(path string) (Config, error) {
 	if cfg.AlertCooldownMinute <= 0 {
 		cfg.AlertCooldownMinute = 20
 	}
+	if cfg.InspectFailureThreshold <= 0 {
+		cfg.InspectFailureThreshold = 3
+	}
+	if cfg.StatusFailureThreshold <= 0 {
+		cfg.StatusFailureThreshold = 2
+	}
+	if cfg.AutoRestartCooldownMinutes <= 0 {
+		cfg.AutoRestartCooldownMinutes = 15
+	}
+	if cfg.AutoRestartMaxAttempts <= 0 {
+		cfg.AutoRestartMaxAttempts = 3
+	}
+	if cfg.AutoRestartMaxBackoffMinutes <= 0 {
+		cfg.AutoRestartMaxBackoffMinutes = 120
+	}
 	if cfg.DataDir == "" {
 		cfg.DataDir = "/var/lib/opi-dockerd-watch"
 	}
 	if cfg.HostAlias == "" {
 		host, _ := os.Hostname()
 		cfg.HostAlias = host
+	}
+	if cfg.DailySummary.Hour < 0 || cfg.DailySummary.Hour > 23 {
+		cfg.DailySummary.Hour = 9
+	}
+	if cfg.DailySummary.Minute < 0 || cfg.DailySummary.Minute > 59 {
+		cfg.DailySummary.Minute = 0
 	}
 
 	for i := range cfg.Containers {
@@ -75,4 +108,12 @@ func (c Config) PollInterval() time.Duration {
 
 func (c Config) AlertCooldown() time.Duration {
 	return time.Duration(c.AlertCooldownMinute) * time.Minute
+}
+
+func (c Config) AutoRestartCooldown() time.Duration {
+	return time.Duration(c.AutoRestartCooldownMinutes) * time.Minute
+}
+
+func (c Config) AutoRestartMaxBackoff() time.Duration {
+	return time.Duration(c.AutoRestartMaxBackoffMinutes) * time.Minute
 }
