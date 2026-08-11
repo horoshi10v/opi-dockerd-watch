@@ -48,6 +48,12 @@ func (s *Service) handleCommands(now time.Time) error {
 			if err := s.handleRestartCommand(name, now); err != nil {
 				return err
 			}
+		default:
+			if config, ok := apacheVHostForSite(text); ok {
+				if err := s.telegram.SendPreformatted(config); err != nil {
+					return err
+				}
+			}
 		}
 	}
 

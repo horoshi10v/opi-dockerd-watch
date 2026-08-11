@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"html"
 	"io"
 	"net/http"
 	"net/url"
@@ -46,6 +47,15 @@ func (c *Client) Enabled() bool {
 }
 
 func (c *Client) Send(message string) error {
+	return c.send(message, "")
+}
+
+// SendPreformatted sends content in a Telegram preformatted block.
+func (c *Client) SendPreformatted(message string) error {
+	return c.send("<pre>"+html.EscapeString(message)+"</pre>", "HTML")
+}
+
+func (c *Client) send(message, parseMode string) error {
 	if !c.Enabled() {
 		return nil
 	}
@@ -53,6 +63,9 @@ func (c *Client) Send(message string) error {
 	payload := map[string]string{
 		"chat_id": c.chatID,
 		"text":    message,
+	}
+	if parseMode != "" {
+		payload["parse_mode"] = parseMode
 	}
 
 	body, err := json.Marshal(payload)
